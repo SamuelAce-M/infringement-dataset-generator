@@ -75,8 +75,17 @@ class Pipeline:
                 "transformations": "",
             })
 
-        # Step 4: Write metadata
-        logger.info("Step 4: Writing metadata...")
+        # Step 4: Cross-validate negative vs registry (NO visual overlap allowed)
+        logger.info("Step 4: Cross-validating negative vs registry...")
+        violations = self._validate_negatives(neg_dir, reg_dir, registry_ids)
+        if violations:
+            logger.error(f"CROSS-VALIDATION FAILED: {len(violations)} violations")
+            for v in violations[:5]:
+                logger.error(f"  {v}")
+            return
+
+        # Step 5: Write metadata
+        logger.info("Step 5: Writing metadata...")
         self.write_metadata()
         logger.info(f"Pipeline complete! {len(self.metadata)} samples generated.")
         self.print_summary()
@@ -105,3 +114,35 @@ class Pipeline:
         print(f"  Total:            {positives + negatives}")
         print(f"  Metadata:         {self.output_root / 'metadata.csv'}")
         print(f"{'='*50}")
+
+    def _validate_negatives(self, neg_dir: Path, reg_dir: Path, registry_ids: list[str]) -> list[str]:
+        """Cross-validate: every negative MUST be visually distinct from ALL registry images."""
+        from PIL import Image
+        violations = []
+        reg_files = [f"patent_{rid}.png" for rid in registry_ids]
+        neg_files = sorted(neg_dir.glob("*.png"))
+
+        for nf in neg_files:
+            n_img = Image.open(nf)
+            for rf_name in reg_files:
+                rf_path = reg_dir / rf_name
+                if not rf_path.exists():
+                    continue
+                r_img = Image.open(rf_path)
+
+                # Identical pixel-level check
+                if hash(n_img.tobytes()) == hash(r_img.tobytes()):
+                    violations.append(f"IDENTICAL: {nf.name} == {rf_name}")
+
+                # High similarity check (>75% similar = too close, might be "just recolored")
+                n_small = n_img.resize((64, 64))
+                r_small = r_img.resize((64, 64))
+                nd = list(n_small.getdata())
+                rd = list(r_small.getdata())
+                diff = sum(1 for k in range(len(nd))
+                           if sum(abs(x - y) for x, y in zip(nd[k], rd[k])) > 50)
+                similarity = (1 - diff / len(nd)) * 100
+                if similarity > 75:
+                    violations.append(f"HIGH-SIM ({similarity:.0f}%): {nf.name} vs {rf_name}")
+
+        return violations

@@ -86,50 +86,98 @@ class RegistryCollector:
         return self._generate_placeholder(patent_id, output_path)
 
     def _generate_placeholder(self, patent_id: str, path: str) -> str:
-        """Generate a visually distinct placeholder image per patent ID."""
+        """Generate a TRULY UNIQUE placeholder per patent ID — no shape reuse."""
         from PIL import ImageDraw
         import hashlib
         h = hashlib.md5(patent_id.encode()).hexdigest()
-        # Use different bytes for different visual elements
+        
+        # Every visual element derived from different hash bytes → unique per ID
         bg_r = int(h[0:2], 16)
         bg_g = int(h[2:4], 16)
         bg_b = int(h[4:6], 16)
-        shape_type = int(h[6:8], 16) % 5  # 5 different shapes
-        shape_color = (int(h[8:10], 16), int(h[10:12], 16), int(h[12:14], 16))
-        detail_color = (int(h[14:16], 16), int(h[16:18], 16), int(h[18:20], 16))
-
+        
         img = Image.new("RGB", (512, 512), (bg_r, bg_g, bg_b))
         draw = ImageDraw.Draw(img)
-
-        # Draw different shapes based on patent ID
-        if shape_type == 0:  # Product silhouette (rounded rect)
-            draw.rounded_rectangle([60, 120, 452, 400], radius=40, fill=shape_color, outline=detail_color, width=3)
-            draw.rounded_rectangle([120, 160, 392, 360], radius=20, fill=detail_color)
-            draw.text((180, 230), "Product", fill=(255, 255, 255))
-        elif shape_type == 1:  # Bottle/container shape
-            draw.ellipse([100, 80, 412, 250], fill=shape_color, outline=detail_color, width=3)
-            draw.rectangle([180, 240, 332, 420], fill=shape_color, outline=detail_color, width=3)
-            draw.text((200, 310), "Container", fill=(255, 255, 255))
-        elif shape_type == 2:  # Electronic device
-            draw.rounded_rectangle([80, 100, 432, 380], radius=20, fill=shape_color, outline=detail_color, width=3)
-            draw.rectangle([220, 160, 420, 320], fill=detail_color, outline=(255, 255, 255), width=2)
-            draw.ellipse([240, 400, 280, 430], fill=detail_color)
-            draw.text((130, 420), "Device", fill=(255, 255, 255))
-        elif shape_type == 3:  # Furniture
-            draw.rectangle([100, 200, 412, 250], fill=shape_color, outline=detail_color, width=3)
-            draw.rectangle([140, 100, 180, 200], fill=shape_color, outline=detail_color, width=2)
-            draw.rectangle([332, 100, 372, 200], fill=shape_color, outline=detail_color, width=2)
-            draw.rectangle([140, 420, 200, 450], fill=detail_color)
-            draw.rectangle([312, 420, 372, 450], fill=detail_color)
-            draw.text((180, 460), "Furniture", fill=(255, 255, 255))
-        else:  # Abstract design
-            draw.polygon([(256, 60), (420, 200), (400, 400), (112, 380), (80, 200)], fill=shape_color, outline=detail_color, width=3)
-            draw.ellipse([180, 180, 332, 300], fill=detail_color)
-            draw.text((200, 460), "Design", fill=(255, 255, 255))
-
-        # Patent ID watermark
+        
+        # Extract many parameters from the hash for unique geometry
+        p = [int(h[i:i+2], 16) for i in range(0, 32, 2)]  # 16 params (0-255)
+        
+        # P1: product body type (8 variations)
+        body_type = p[0] % 8
+        
+        # P2-3: body dimensions (unique per patent)
+        bx = 40 + p[1] % 80          # 40-120
+        by = 60 + p[2] % 120          # 60-180
+        bw = 280 + p[3] % 150         # 280-430
+        bh = 200 + p[4] % 130         # 200-330
+        
+        # P4: body color
+        body_color = (p[5], p[6], p[7])
+        
+        # P5: accent / detail color
+        accent_color = (p[8], p[9], p[10])
+        
+        # P6-7: detail element positions (unique per patent)
+        dx1 = bx + 20 + p[11] % (bw - 80)
+        dy1 = by + 20 + p[12] % (bh - 80)
+        dx2 = bx + 20 + p[13] % (bw - 80)
+        dy2 = by + 20 + p[14] % (bh - 80)
+        
+        # P8: extra element type
+        extra_type = p[15] % 4
+        
+        if body_type == 0:
+            draw.rounded_rectangle([bx, by, bx+bw, by+bh], radius=30, fill=body_color, outline=accent_color, width=3)
+        elif body_type == 1:
+            draw.ellipse([bx, by, bx+bw, by+bh], fill=body_color, outline=accent_color, width=3)
+        elif body_type == 2:
+            draw.rectangle([bx, by, bx+bw, by+bh], fill=body_color, outline=accent_color, width=3)
+        elif body_type == 3:
+            # Rounded top, flat bottom
+            draw.rounded_rectangle([bx, by, bx+bw, by+bh], radius=50, fill=body_color, outline=accent_color, width=3)
+            draw.rectangle([bx+20, by+bh//2, bx+bw-20, by+bh], fill=accent_color)
+        elif body_type == 4:
+            # Two-part shape
+            draw.rounded_rectangle([bx, by, bx+bw, by+bh//2], radius=25, fill=body_color, outline=accent_color, width=3)
+            draw.rounded_rectangle([bx+15, by+bh//2, bx+bw-15, by+bh], radius=15, fill=accent_color, outline=body_color, width=2)
+        elif body_type == 5:
+            # Vertical split
+            draw.rectangle([bx, by, bx+bw//2, by+bh], fill=body_color, outline=accent_color, width=2)
+            draw.rectangle([bx+bw//2, by, bx+bw, by+bh], fill=accent_color, outline=body_color, width=2)
+        elif body_type == 6:
+            # Horizontal bands
+            for i in range(3):
+                yy = by + i * bh // 3
+                color = body_color if i % 2 == 0 else accent_color
+                draw.rectangle([bx, yy, bx+bw, yy+bh//3], fill=color)
+        else:
+            # Hexagonal
+            cx, cy = bx + bw//2, by + bh//2
+            r = min(bw, bh) // 2
+            import math
+            pts = []
+            for i in range(6):
+                angle = math.pi/3 * i - math.pi/6
+                pts.append((cx + r * math.cos(angle), cy + r * math.sin(angle)))
+            draw.polygon(pts, fill=body_color, outline=accent_color, width=3)
+        
+        # Add unique detail elements (position varies per patent)
+        if extra_type == 0:
+            draw.ellipse([dx1-15, dy1-15, dx1+15, dy1+15], fill=accent_color)
+            draw.ellipse([dx2-10, dy2-10, dx2+10, dy2+10], fill=body_color)
+        elif extra_type == 1:
+            draw.rectangle([dx1-20, dy1-10, dx1+20, dy1+10], fill=accent_color)
+            draw.rectangle([dx2-10, dy2-20, dx2+10, dy2+20], fill=body_color)
+        elif extra_type == 2:
+            draw.line([(dx1, dy1-20), (dx1, dy1+20)], fill=accent_color, width=4)
+            draw.line([(dx1-20, dy1), (dx1+20, dy1)], fill=accent_color, width=4)
+        else:
+            pts = [(dx1, dy1-15), (dx1+15, dy1+10), (dx1-15, dy1+10)]
+            draw.polygon(pts, fill=accent_color)
+        
+        # Watermark
         draw.text((10, 10), f"Patent {patent_id}", fill=(255, 255, 255))
-        draw.text((10, 490), "Design Patent", fill=detail_color)
+        draw.text((10, 490), "Design Patent", fill=accent_color)
 
         img.save(path, "PNG")
         return path
