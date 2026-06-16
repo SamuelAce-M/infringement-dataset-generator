@@ -1,5 +1,6 @@
 """Negative sample generator from same-category different-design patents."""
 import os
+import tempfile
 import logging
 from pathlib import Path
 from PIL import Image
@@ -14,26 +15,32 @@ class NegativeGenerator:
         os.makedirs(output_dir, exist_ok=True)
 
     def collect_same_category(
-        self, collector, keyword: str, exclude_ids: list[str], count: int = 20,
+        self, CollectorClass, keyword: str, exclude_ids: list[str], count: int = 20,
     ) -> list[str]:
-        """Search same category patents, exclude registry ones, return paths."""
-        results = collector.search(keyword, limit=count + len(exclude_ids) + 10)
-        paths = []
-        for patent in results:
-            if patent["id"] in exclude_ids:
-                continue
-            if len(paths) >= count:
-                break
-            path = collector.download(patent)
-            if path:
-                dest = os.path.join(
-                    self.output_dir,
-                    f"negative_{patent['id']}_{len(paths)+1:03d}.png"
-                )
-                img = Image.open(path)
-                img.save(dest, "PNG")
-                paths.append(dest)
-        return paths
+        """Search same category patents, exclude registry ones, return paths.
+        
+        Uses a temp directory for downloads to avoid polluting the registry.
+        CollectorClass should be RegistryCollector (the class, not an instance).
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            collector = CollectorClass(output_dir=tmpdir)
+            results = collector.search(keyword, limit=count + len(exclude_ids) + 10)
+            paths = []
+            for patent in results:
+                if patent["id"] in exclude_ids:
+                    continue
+                if len(paths) >= count:
+                    break
+                path = collector.download(patent)
+                if path:
+                    dest = os.path.join(
+                        self.output_dir,
+                        f"negative_{patent['id']}_{len(paths)+1:03d}.png"
+                    )
+                    img = Image.open(path)
+                    img.save(dest, "PNG")
+                    paths.append(dest)
+            return paths
 
     def verify_difference(self, registry_path: str, candidate_path: str) -> bool:
         """Check that two images are meaningfully different."""

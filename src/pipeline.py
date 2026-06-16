@@ -63,7 +63,7 @@ class Pipeline:
         logger.info(f"Step 3: Generating {negative_count} negative samples...")
         neg_gen = NegativeGenerator(str(neg_dir))
         neg_paths = neg_gen.collect_same_category(
-            collector, keyword, exclude_ids=registry_ids, count=negative_count
+            RegistryCollector, keyword, exclude_ids=registry_ids, count=negative_count
         )
         for p in neg_paths:
             fname = Path(p).name

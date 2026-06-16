@@ -31,8 +31,7 @@ def test_verify_difference_same_image(two_images):
 def test_collect_same_category(tmp_path):
     d = str(tmp_path)
     g = NegativeGenerator(str(tmp_path / "negative"))
-    c = RegistryCollector(str(tmp_path / "registry"))
-    paths = g.collect_same_category(c, "保温杯", exclude_ids=["CN202430100001"], count=3)
+    paths = g.collect_same_category(RegistryCollector, "保温杯", exclude_ids=["CN202430100001"], count=3)
     assert len(paths) == 3
     for p in paths:
         assert os.path.exists(p)
