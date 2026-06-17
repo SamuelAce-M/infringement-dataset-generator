@@ -31,7 +31,25 @@ def test_verify_difference_same_image(two_images):
 def test_collect_same_category(tmp_path):
     d = str(tmp_path)
     g = NegativeGenerator(str(tmp_path / "negative"))
-    paths = g.collect_same_category(RegistryCollector, "保温杯", exclude_ids=["CN202430100001"], count=3)
-    assert len(paths) == 3
-    for p in paths:
-        assert os.path.exists(p)
+    samples = g.collect_same_category(
+        RegistryCollector,
+        "保温杯",
+        exclude_ids=["CN202430100001"],
+        count=3,
+        allow_placeholder=True,
+    )
+    assert len(samples) == 3
+    for sample in samples:
+        assert os.path.exists(sample.path)
+        assert sample.similarity_band == "negative"
+
+def test_collect_from_file_filters_by_similarity(tmp_path, two_images):
+    manifest = tmp_path / "negative.csv"
+    manifest.write_text(f"sample_id,image_path,registry_id,similarity_score\nNEG001,{two_images[1]},REG001,0.20\nNEG002,{two_images[0]},REG001,0.60\n")
+
+    g = NegativeGenerator(str(tmp_path / "negative"))
+    samples = g.collect_from_file(str(manifest), {"REG001": two_images[0]}, count=5)
+
+    assert len(samples) == 1
+    assert samples[0].sample_id == "NEG001"
+    assert os.path.exists(samples[0].path)

@@ -1,130 +1,158 @@
-# ARCHITECTURE.md — 侵权检测训练图库生成器
+# ARCHITECTURE.md - 侵权检测训练图库生成器
 
 ## 系统架构
 
 ```
-┌───────────────────────────────────────────────────────────┐
-│                    编排层 (Orchestrator)                    │
-│                   main.py / CLI 入口                       │
-│          ┌─────────────────────────────────────┐          │
-│          │           Pipeline Runner           │          │
-│          │   注册图采集 → 正样本生成 → 负样本生成  │          │
-│          └──────────────┬──────────────────────┘          │
-└─────────────────────────┼─────────────────────────────────┘
-                          │
-          ┌───────────────┼───────────────┐
-          ▼               ▼               ▼
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│ Registry    │  │ Positive    │  │ Negative    │
-│ Collector   │  │ Generator   │  │ Generator   │
-├─────────────┤  ├─────────────┤  ├─────────────┤
-│ - 专利爬取   │  │ - 颜色变换   │  │ - 同类不同   │
-│ - 图片下载   │  │ - Logo叠加   │  │   专利筛选   │
-│ - 格式归一化 │  │ - 局部变形   │  │ - 差异确认   │
-└──────┬──────┘  │ - 裁剪拼接   │  └──────┬──────┘
-       │         │ - 组合变换   │         │
-       │         └──────┬──────┘         │
-       │                │                │
-       ▼                ▼                ▼
-┌─────────────────────────────────────────────────────────┐
-│                   数据层 (Data Layer)                     │
-│                                                         │
-│  datasets/registry/{type}/     ← 原始注册图               │
-│  datasets/training/{type}/positive/  ← 侵权正样本         │
-│  datasets/training/{type}/negative/  ← 不侵权负样本        │
-│                                                         │
-│  metadata.csv  ← 每张图片的元数据标注                      │
-└─────────────────────────────────────────────────────────┘
+CLI main.py
+  |
+  v
+Pipeline Runner
+  |
+  +-- RegistryCollector
+  |     +-- file manifest import
+  |     +-- optional online search adapter
+  |     +-- explicit fixture placeholder mode
+  |
+  +-- PositiveGenerator
+  |     +-- programmatic transforms
+  |     +-- similarity score estimate
+  |     +-- positive / mid band assignment
+  |
+  +-- NegativeGenerator
+  |     +-- local negative manifest import
+  |     +-- optional same-category online adapter
+  |     +-- negative threshold enforcement
+  |
+  +-- Metadata Writer
+  |
+  v
+datasets/
+  |
+  +-- registry/{type}/
+  +-- training/{type}/positive/
+  +-- training/{type}/negative/
+  +-- metadata.csv
+
+validate_dataset.py
+  |
+  v
+Dataset validation report
 ```
+
+## 当前边界
+
+Phase 0.1 以本地可信数据导入为主。在线 CNIPA/WIPO 采集仍是 Phase 0.2 Spike，不作为当前主流程的可靠前提。
+
+placeholder 只能通过 `--allow-placeholder` 显式启用，用于测试或演示；生产模式下载失败或来源缺失时应跳过并记录。
 
 ## 组件说明
 
-### 1. Registry Collector（注册图采集器）
+### 1. RegistryCollector
 
-**职责**：从公开专利数据库获取外观设计专利图片
+**职责**：导入或采集注册图库。
 
-**输入**：专利号列表 或 搜索关键词
-**输出**：归一化后的注册图（统一尺寸、格式）
+**输入**：
+- `file <manifest.csv>`：本地注册图 manifest。
+- URL manifest：manifest 图片字段可为 `http://` 或 `https://` 图片 URL。
+- `search <keyword>`：在线搜索适配器入口；当前必须显式允许 placeholder 才能在无网络或无结果时生成 fixture。
 
-**数据源**：
-- CNIPA 中国专利公布公告 (http://epub.sipo.gov.cn)
-- WIPO Global Design Database (https://www.wipo.int/designdb)
+**输出**：
+- `datasets/registry/{type}/patent_{registry_id}.png`
+- 统一 PNG、512x512、RGB。
 
-**处理流程**：
-1. 搜索/读取专利号 → 2. 下载专利图片 → 3. 裁剪/缩放归一化 → 4. 存入 registry/
+### 2. PositiveGenerator
 
-### 2. Positive Generator（正样本生成器）
+**职责**：基于注册图生成侵权或边界正样本。
 
-**职责**：对注册图施加程序化变换，生成侵权正样本
+**输出记录**：
+- 图片路径。
+- JSON 变换参数。
+- `similarity_score`。
+- `similarity_band`：`positive` 或 `mid`。
 
-**侵权判定操作标准**：
-- 保留核心设计特征（轮廓、比例、结构布局）
-- 改变非核心细节（颜色、材质纹理、小装饰）
+当前 `mid` 样本仍写入 positive 目录，`label=positive`，但 metadata 保留分层，便于后期调整阈值。
 
-**变换操作**（可组合）：
-| 变换 | 方法 | 参数 | 保留 | 改变 |
-|------|------|------|------|------|
-| 颜色替换 | HSV 色相偏移 / 色彩映射 | 色相偏移度、饱和度 | 形状、纹理 | 颜色 |
-| Logo 叠加 | PIL 贴图 + 透明度 | logo图片、位置、大小 | 形状 | 局部图案 |
-| 局部变形 | 仿射变换 / 透视变换 | 变形区域、强度 | 整体轮廓 | 局部比例 |
-| 裁剪拼接 | 裁切 + 边缘拼接 | 裁切比例 | 主体结构 | 局部元素 |
-| 镜像翻转 | 水平/垂直翻转 | 方向 | 设计特征 | 朝向 |
+### 3. NegativeGenerator
 
-### 3. Negative Generator（负样本生成器）
+**职责**：导入或筛选不侵权负样本。
 
-**职责**：筛选同类但设计不同的专利图片作为不侵权样本
+**输入**：
+- 本地负样本 manifest：`sample_id,image_path[,registry_id][,similarity_score]`。
+- 可选同品类在线采集适配器。
 
-**不侵权判定标准**：
-- 同品类产品（相同国际分类号）
-- 核心区别设计特征不同
-- 整体视觉效果显著不同
+**规则**：
+- 负样本必须满足 `similarity_score < 0.40`。
+- 不满足阈值的候选跳过并记录日志。
 
-**处理流程**：
-1. 爬取同类其他专利图片 → 2. 确认与注册图核心特征不同 → 3. 存入 negative/
+### 4. Pipeline Runner
 
-### 4. Pipeline Runner（流程编排器）
+**职责**：串联注册图导入、正样本生成、负样本生成、metadata 写入。
 
-**职责**：串联所有组件，执行完整的生成流程
+**CLI 示例**：
 
-```python
-pipeline = Pipeline([
-    RegistryCollector(patent_ids),
-    PositiveGenerator(transforms, count=20),
-    NegativeGenerator(same_category_patents, count=20),
-])
-pipeline.run()
+```bash
+python main.py \
+  --type 外观设计专利 \
+  --registry file datasets/registry_manifest.csv \
+  --negative-source datasets/negative_manifest.csv \
+  --registry-count 5 \
+  --positive 20 \
+  --negative 20 \
+  --output datasets
 ```
 
-## 技术选型
+### 5. Dataset Validator
 
-| 组件 | 技术 | 原因 |
-|------|------|------|
-| 图片处理 | Pillow + OpenCV | 成熟稳定，变换操作丰富 |
-| 专利爬取 | requests + BeautifulSoup | 轻量级 HTTP 客户端 |
-| 流程编排 | Python 原生 | 无需额外框架 |
-| Phase 2 AI 生成 | ComfyUI (本地部署) | 可调用 ComfyUI API 做 img2img |
+**职责**：对生成后的数据集做批量验收。
 
-## 数据流
+**检查项**：
+- `metadata.csv` 必填字段完整。
+- 图片文件存在、可打开、尺寸为 512x512、RGB。
+- `transformations` 是 JSON list。
+- `similarity_score` 在 0.0-1.0。
+- `similarity_band` 与阈值一致。
+- negative 样本低于 0.40。
+- 重复图片给出 warning。
+- 缺少 `mid`、`positive` 或 `negative` 分层给出 warning。
 
-```
-专利号列表 ──→ Registry Collector ──→ datasets/registry/外观设计专利/
-                                          │
-                    ┌─────────────────────┤
-                    ▼                     ▼
-            Positive Generator    Negative Generator
-            (程序化变换)           (同类不同专利)
-                    │                     │
-                    ▼                     ▼
-   datasets/training/外观设计专利/positive/
-   datasets/training/外观设计专利/negative/
-                    │
-                    ▼
-              metadata.csv (图片路径, 侵权标签, 侵权类型, 变换参数)
+**命令**：
+
+```bash
+python validate_dataset.py --root datasets
 ```
 
-## Phase 2 扩展点
+### 6. Source Spike
 
-- **ComfyUI 集成**：img2img 工作流接收注册图，生成高真实感变体
-- **并行化**：多进程处理大批量图片变换
-- **PyTorch Dataset**：封装为可训练数据集类
-- **Web 界面**：可视化训练图库浏览和标注
+**职责**：探测候选在线专利或设计数据库是否可访问，并输出 JSON 报告。
+
+**命令**：
+
+```bash
+python main.py source-spike --output reports/source_spike.json --timeout 10
+```
+
+当前候选：
+- WIPO Global Design Database。
+- CNIPA legacy publication endpoint。
+
+Spike 只负责验证可访问性和记录状态；稳定搜索、记录解析和图片下载需要单独数据源适配器实现。
+
+## metadata 字段
+
+| 字段 | 说明 |
+|------|------|
+| `image_path` | 相对数据集根目录的图片路径 |
+| `label` | `positive` / `negative` |
+| `similarity_band` | `positive` / `mid` / `negative` |
+| `similarity_score` | 0.0-1.0 |
+| `infringement_type` | 侵权类型 |
+| `registry_id` | 对应注册图 ID |
+| `source` | `generated` / `local_manifest` / `online` / `fixture` |
+| `transformations` | JSON list |
+
+## 扩展点
+
+- 在线数据源适配器：CNIPA、WIPO 或其他公开设计数据库。
+- 更可靠的相似度估计：pHash、SSIM、CLIP embedding。
+- ComfyUI：作为 Phase 2 可选增强器。
+- 下游训练系统接口说明：只描述 metadata 和目录结构，不提供训练代码。

@@ -19,25 +19,28 @@ def test_generator_creates_output_dir(tmp_path):
 def test_generate_creates_correct_count(sample_registry, tmp_path):
     d = str(tmp_path / "positive")
     g = PositiveGenerator(d)
-    paths = g.generate(sample_registry, "TEST001", count=5)
-    assert len(paths) == 5
-    for p in paths:
-        assert os.path.exists(p)
+    samples = g.generate(sample_registry, "TEST001", count=5)
+    assert len(samples) == 5
+    for sample in samples:
+        assert os.path.exists(sample.path)
+        assert sample.transformations
+        assert sample.similarity_band in {"positive", "mid"}
+        assert sample.similarity_score >= 0.40
 
 def test_generate_output_is_valid_image(sample_registry, tmp_path):
     d = str(tmp_path / "positive")
     g = PositiveGenerator(d)
-    paths = g.generate(sample_registry, "TEST001", count=3)
-    for p in paths:
-        img = Image.open(p)
+    samples = g.generate(sample_registry, "TEST001", count=3)
+    for sample in samples:
+        img = Image.open(sample.path)
         assert img.size == (512, 512)
         assert img.mode == "RGB"
 
 def test_generate_applies_different_transforms(sample_registry, tmp_path):
     d = str(tmp_path / "positive")
     g = PositiveGenerator(d)
-    paths = g.generate(sample_registry, "TEST001", count=3)
-    images = [Image.open(p) for p in paths]
+    samples = g.generate(sample_registry, "TEST001", count=3)
+    images = [Image.open(sample.path) for sample in samples]
     hashes = [hash(img.tobytes()) for img in images]
     assert len(set(hashes)) >= 2
 
@@ -45,9 +48,13 @@ def test_individual_transforms(sample_registry):
     img = Image.open(sample_registry)
     for name in ["hue_shift", "saturation", "brightness", "local_warp", "mirror"]:
         fn = getattr(PositiveGenerator, f"apply_{name}")
-        result = fn(img)
+        result, meta = fn(img)
         assert result.size == (512, 512)
-    result = PositiveGenerator.apply_logo_overlay(img)
+        assert "name" in meta
+        assert "params" in meta
+    result, meta = PositiveGenerator.apply_logo_overlay(img)
     assert result.size == (512, 512)
-    result = PositiveGenerator.apply_crop_stitch(img)
+    assert meta["name"] == "logo_overlay"
+    result, meta = PositiveGenerator.apply_crop_stitch(img)
     assert result.size == (512, 512)
+    assert meta["name"] == "crop_stitch"

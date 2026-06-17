@@ -1,5 +1,6 @@
 """Pipeline orchestrator for training dataset generation."""
 import csv
+import json
 import logging
 from pathlib import Path
 from src.registry import RegistryCollector
@@ -17,8 +18,15 @@ class Pipeline:
         self.metadata = []
 
     def run(
-        self, infringement_type: str, keyword: str,
-        registry_count: int = 5, positive_count: int = 20, negative_count: int = 20,
+        self,
+        infringement_type: str,
+        registry_mode: str = "search",
+        registry_value: str = "",
+        negative_source: str | None = None,
+        registry_count: int = 5,
+        positive_count: int = 20,
+        negative_count: int = 20,
+        allow_placeholder: bool = False,
     ):
         """Execute the full pipeline."""
         logger.info(f"Starting pipeline for {infringement_type}")
@@ -29,14 +37,26 @@ class Pipeline:
 
         # Step 1: Collect registry images
         logger.info("Step 1: Collecting registry images...")
-        collector = RegistryCollector(str(reg_dir))
-        patents = collector.search(keyword, limit=registry_count)
-        registry_ids = []
-        for patent in patents:
-            path = collector.download(patent)
-            if path:
-                registry_ids.append(patent["id"])
-                logger.info(f"  Downloaded: {patent['id']}")
+        collector = RegistryCollector(str(reg_dir), allow_placeholder=allow_placeholder)
+        registry_records = []
+        if registry_mode == "file":
+            registry_records = collector.collect_from_file(registry_value, limit=registry_count)
+        elif registry_mode == "search":
+            patents = collector.search(registry_value, limit=registry_count)
+            for patent in patents:
+                path = collector.download(patent)
+                if path:
+                    registry_records.append({
+                        **patent,
+                        "path": path,
+                        "source": "fixture" if allow_placeholder else "online",
+                    })
+                    logger.info(f"  Collected: {patent['id']}")
+        else:
+            raise ValueError(f"Unsupported registry mode: {registry_mode}")
+
+        registry_ids = [record["id"] for record in registry_records]
+        registry_paths = {record["id"]: record["path"] for record in registry_records}
 
         if not registry_ids:
             logger.error("No registry images collected. Aborting.")
@@ -45,34 +65,47 @@ class Pipeline:
         # Step 2: Generate positive samples
         logger.info(f"Step 2: Generating {positive_count} positive samples...")
         pos_gen = PositiveGenerator(str(pos_dir))
-        per_registry = max(1, positive_count // len(registry_ids))
-        for reg_id in registry_ids:
+        allocations = self._allocate_counts(positive_count, len(registry_ids))
+        for reg_id, count in zip(registry_ids, allocations):
             reg_path = reg_dir / f"patent_{reg_id}.png"
             if reg_path.exists():
-                pos_gen.generate(str(reg_path), reg_id, count=per_registry)
-                for i in range(per_registry):
+                samples = pos_gen.generate(str(reg_path), reg_id, count=count)
+                for sample in samples:
                     self.metadata.append({
-                        "image_path": f"training/{infringement_type}/positive/positive_{reg_id}_{i+1:03d}.png",
+                        "image_path": f"training/{infringement_type}/positive/{Path(sample.path).name}",
                         "label": "positive",
+                        "similarity_band": sample.similarity_band,
+                        "similarity_score": f"{sample.similarity_score:.4f}",
                         "infringement_type": infringement_type,
                         "registry_id": reg_id,
-                        "transformations": "composite",
+                        "source": "generated",
+                        "transformations": json.dumps(sample.transformations, ensure_ascii=False),
                     })
 
         # Step 3: Generate negative samples
         logger.info(f"Step 3: Generating {negative_count} negative samples...")
         neg_gen = NegativeGenerator(str(neg_dir))
-        neg_paths = neg_gen.collect_same_category(
-            RegistryCollector, keyword, exclude_ids=registry_ids, count=negative_count
-        )
-        for p in neg_paths:
-            fname = Path(p).name
+        if negative_source:
+            neg_samples = neg_gen.collect_from_file(negative_source, registry_paths, count=negative_count)
+        else:
+            neg_samples = neg_gen.collect_same_category(
+                RegistryCollector,
+                registry_value,
+                exclude_ids=registry_ids,
+                count=negative_count,
+                allow_placeholder=allow_placeholder,
+            )
+        for sample in neg_samples:
+            fname = Path(sample.path).name
             self.metadata.append({
                 "image_path": f"training/{infringement_type}/negative/{fname}",
                 "label": "negative",
+                "similarity_band": sample.similarity_band,
+                "similarity_score": f"{sample.similarity_score:.4f}",
                 "infringement_type": infringement_type,
-                "registry_id": "",
-                "transformations": "",
+                "registry_id": sample.registry_id,
+                "source": sample.source,
+                "transformations": "[]",
             })
 
         # Step 4: Cross-validate negative vs registry (NO visual overlap allowed)
@@ -95,7 +128,14 @@ class Pipeline:
         file_exists = csv_path.exists()
         with open(csv_path, "a", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=[
-                "image_path", "label", "infringement_type", "registry_id", "transformations"
+                "image_path",
+                "label",
+                "similarity_band",
+                "similarity_score",
+                "infringement_type",
+                "registry_id",
+                "source",
+                "transformations",
             ])
             if not file_exists:
                 writer.writeheader()
@@ -146,3 +186,11 @@ class Pipeline:
                     violations.append(f"HIGH-SIM ({similarity:.0f}%): {nf.name} vs {rf_name}")
 
         return violations
+
+    @staticmethod
+    def _allocate_counts(total: int, buckets: int) -> list[int]:
+        if buckets <= 0:
+            return []
+        base = total // buckets
+        remainder = total % buckets
+        return [base + (1 if i < remainder else 0) for i in range(buckets)]

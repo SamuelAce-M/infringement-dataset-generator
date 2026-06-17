@@ -1,6 +1,6 @@
-"""CNIPA patent image collector for design patents."""
+"""Patent image collector for design patent datasets."""
+import csv
 import os
-import time
 import logging
 import requests
 from bs4 import BeautifulSoup
@@ -10,18 +10,56 @@ from io import BytesIO
 logger = logging.getLogger(__name__)
 
 class RegistryCollector:
-    """Search and download design patent images from CNIPA."""
+    """Import or download design patent registry images."""
 
     BASE_URL = "http://epub.sipo.gov.cn"
     SEARCH_URL = f"{BASE_URL}/advancedSearch"
 
-    def __init__(self, output_dir: str = "datasets/registry/外观设计专利"):
+    def __init__(
+        self,
+        output_dir: str = "datasets/registry/外观设计专利",
+        allow_placeholder: bool = False,
+    ):
         self.output_dir = output_dir
+        self.allow_placeholder = allow_placeholder
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         })
         os.makedirs(output_dir, exist_ok=True)
+
+    def collect_from_file(self, manifest_path: str, limit: int | None = None) -> list[dict]:
+        """Import registry images from a CSV manifest.
+
+        Supported rows:
+        - registry_id,image_path
+        - registry_id
+        - registry_id,image_url
+        """
+        records = []
+        with open(manifest_path, newline="") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if not row or row[0].strip().startswith("#"):
+                    continue
+                if row[0].strip() == "registry_id":
+                    continue
+                registry_id = row[0].strip()
+                image_ref = row[1].strip() if len(row) > 1 else ""
+                is_url = self._is_url(image_ref)
+                patent = {
+                    "id": registry_id,
+                    "title": registry_id,
+                    "image_path": image_ref if image_ref and not is_url else None,
+                    "image_url": image_ref if is_url else None,
+                    "source": "url_manifest" if is_url else "local_manifest",
+                }
+                path = self.download(patent)
+                if path:
+                    records.append({**patent, "path": path})
+                if limit is not None and len(records) >= limit:
+                    break
+        return records
 
     def search(self, keyword: str, limit: int = 5) -> list[dict]:
         """Search design patents by keyword. Returns list of {id, title, image_url}."""
@@ -49,8 +87,15 @@ class RegistryCollector:
             logger.warning(f"Search failed for '{keyword}': {e}")
 
         if not results:
-            results = self._fallback_search(keyword, limit)
+            if self.allow_placeholder:
+                results = self._fallback_search(keyword, limit)
+            else:
+                logger.warning("No search results for '%s'; placeholder disabled", keyword)
         return results
+
+    @staticmethod
+    def _is_url(value: str) -> bool:
+        return value.startswith("http://") or value.startswith("https://")
 
     def _build_image_url(self, patent_id: str) -> str:
         return f"http://epub.sipo.gov.cn/patentimg/{patent_id}"
@@ -72,6 +117,15 @@ class RegistryCollector:
         output_path = os.path.join(self.output_dir, f"patent_{patent_id}.png")
         if os.path.exists(output_path):
             return output_path
+        local_path = patent.get("image_path")
+        if local_path:
+            try:
+                img = Image.open(local_path)
+                img = self.normalize(img)
+                img.save(output_path, "PNG")
+                return output_path
+            except Exception as e:
+                logger.warning("Local import failed for %s: %s", patent_id, e)
         try:
             url = patent.get("image_url")
             if url:
@@ -83,10 +137,13 @@ class RegistryCollector:
                     return output_path
         except Exception as e:
             logger.warning(f"Download failed for {patent_id}: {e}")
-        return self._generate_placeholder(patent_id, output_path)
+        if self.allow_placeholder:
+            return self._generate_placeholder(patent_id, output_path)
+        logger.warning("Skipping %s; no usable image source and placeholder disabled", patent_id)
+        return None
 
     def _generate_placeholder(self, patent_id: str, path: str) -> str:
-        """Generate a TRULY UNIQUE placeholder per patent ID — no shape reuse."""
+        """Generate a deterministic fixture image for tests and demos only."""
         from PIL import ImageDraw
         import hashlib
         h = hashlib.md5(patent_id.encode()).hexdigest()

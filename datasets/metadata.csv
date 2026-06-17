@@ -1,41 +1,41 @@
-image_path,label,infringement_type,registry_id,transformations
-training/外观设计专利/positive/positive_CN202430100000_001.png,positive,外观设计专利,CN202430100000,composite
-training/外观设计专利/positive/positive_CN202430100000_002.png,positive,外观设计专利,CN202430100000,composite
-training/外观设计专利/positive/positive_CN202430100000_003.png,positive,外观设计专利,CN202430100000,composite
-training/外观设计专利/positive/positive_CN202430100000_004.png,positive,外观设计专利,CN202430100000,composite
-training/外观设计专利/positive/positive_CN202430100001_001.png,positive,外观设计专利,CN202430100001,composite
-training/外观设计专利/positive/positive_CN202430100001_002.png,positive,外观设计专利,CN202430100001,composite
-training/外观设计专利/positive/positive_CN202430100001_003.png,positive,外观设计专利,CN202430100001,composite
-training/外观设计专利/positive/positive_CN202430100001_004.png,positive,外观设计专利,CN202430100001,composite
-training/外观设计专利/positive/positive_CN202430100002_001.png,positive,外观设计专利,CN202430100002,composite
-training/外观设计专利/positive/positive_CN202430100002_002.png,positive,外观设计专利,CN202430100002,composite
-training/外观设计专利/positive/positive_CN202430100002_003.png,positive,外观设计专利,CN202430100002,composite
-training/外观设计专利/positive/positive_CN202430100002_004.png,positive,外观设计专利,CN202430100002,composite
-training/外观设计专利/positive/positive_CN202430100003_001.png,positive,外观设计专利,CN202430100003,composite
-training/外观设计专利/positive/positive_CN202430100003_002.png,positive,外观设计专利,CN202430100003,composite
-training/外观设计专利/positive/positive_CN202430100003_003.png,positive,外观设计专利,CN202430100003,composite
-training/外观设计专利/positive/positive_CN202430100003_004.png,positive,外观设计专利,CN202430100003,composite
-training/外观设计专利/positive/positive_CN202430100004_001.png,positive,外观设计专利,CN202430100004,composite
-training/外观设计专利/positive/positive_CN202430100004_002.png,positive,外观设计专利,CN202430100004,composite
-training/外观设计专利/positive/positive_CN202430100004_003.png,positive,外观设计专利,CN202430100004,composite
-training/外观设计专利/positive/positive_CN202430100004_004.png,positive,外观设计专利,CN202430100004,composite
-training/外观设计专利/negative/negative_CN202430100005_001.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100006_002.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100007_003.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100008_004.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100009_005.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100010_006.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100011_007.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100012_008.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100013_009.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100014_010.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100015_011.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100016_012.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100017_013.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100018_014.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100019_015.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100020_016.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100021_017.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100022_018.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100023_019.png,negative,外观设计专利,,
-training/外观设计专利/negative/negative_CN202430100024_020.png,negative,外观设计专利,,
+image_path,label,similarity_band,similarity_score,infringement_type,registry_id,source,transformations
+training/外观设计专利/positive/positive_CN202430100000_001.png,positive,positive,0.7766,外观设计专利,CN202430100000,generated,"[{""name"": ""brightness"", ""params"": {""brightness"": 1.002}, ""similarity_delta"": 0.02}, {""name"": ""local_warp"", ""params"": {""strength"": 0.088}, ""similarity_delta"": 0.12339279005747493}]"
+training/外观设计专利/positive/positive_CN202430100000_002.png,positive,mid,0.5295,外观设计专利,CN202430100000,generated,"[{""name"": ""saturation"", ""params"": {""saturation"": 1.518}, ""similarity_delta"": 0.02}, {""name"": ""mirror"", ""params"": {""direction"": ""horizontal""}, ""similarity_delta"": 0.16}, {""name"": ""local_warp"", ""params"": {""strength"": 0.093}, ""similarity_delta"": 0.13046325013197427}, {""name"": ""logo_overlay"", ""params"": {""position"": [213, 326], ""scale"": 0.152, ""opacity"": 0.706}, ""similarity_delta"": 0.08}]"
+training/外观设计专利/positive/positive_CN202430100000_003.png,positive,positive,0.8200,外观设计专利,CN202430100000,generated,"[{""name"": ""saturation"", ""params"": {""saturation"": 1.761}, ""similarity_delta"": 0.02}, {""name"": ""logo_overlay"", ""params"": {""position"": [229, 284], ""scale"": 0.146, ""opacity"": 0.706}, ""similarity_delta"": 0.08}]"
+training/外观设计专利/positive/positive_CN202430100000_004.png,positive,positive,0.6436,外观设计专利,CN202430100000,generated,"[{""name"": ""local_warp"", ""params"": {""strength"": 0.076}, ""similarity_delta"": 0.10636565917111916}, {""name"": ""hue_shift"", ""params"": {""hue_shift"": -41.604}, ""similarity_delta"": 0.03}, {""name"": ""saturation"", ""params"": {""saturation"": 1.536}, ""similarity_delta"": 0.02}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.154, ""source"": [153, 199], ""destination"": [416, 352]}, ""similarity_delta"": 0.12}]"
+training/外观设计专利/positive/positive_CN202430100001_001.png,positive,positive,0.7100,外观设计专利,CN202430100001,generated,"[{""name"": ""mirror"", ""params"": {""direction"": ""horizontal""}, ""similarity_delta"": 0.16}, {""name"": ""hue_shift"", ""params"": {""hue_shift"": 28.538}, ""similarity_delta"": 0.03}, {""name"": ""saturation"", ""params"": {""saturation"": 1.668}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100001_002.png,positive,mid,0.5015,外观设计专利,CN202430100001,generated,"[{""name"": ""brightness"", ""params"": {""brightness"": 1.345}, ""similarity_delta"": 0.02}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.179, ""source"": [302, 141], ""destination"": [351, 224]}, ""similarity_delta"": 0.12}, {""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}, {""name"": ""local_warp"", ""params"": {""strength"": 0.027}, ""similarity_delta"": 0.03846574474751154}]"
+training/外观设计专利/positive/positive_CN202430100001_003.png,positive,positive,0.6319,外观设计专利,CN202430100001,generated,"[{""name"": ""logo_overlay"", ""params"": {""position"": [118, 101], ""scale"": 0.1, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""local_warp"", ""params"": {""strength"": 0.034}, ""similarity_delta"": 0.04808095560849693}, {""name"": ""mirror"", ""params"": {""direction"": ""horizontal""}, ""similarity_delta"": 0.16}]"
+training/外观设计专利/positive/positive_CN202430100001_004.png,positive,positive,0.5782,外观设计专利,CN202430100001,generated,"[{""name"": ""local_warp"", ""params"": {""strength"": 0.087}, ""similarity_delta"": 0.12175120144531827}, {""name"": ""saturation"", ""params"": {""saturation"": 1.502}, ""similarity_delta"": 0.02}, {""name"": ""logo_overlay"", ""params"": {""position"": [31, 161], ""scale"": 0.182, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.1, ""source"": [12, 44], ""destination"": [256, 175]}, ""similarity_delta"": 0.12}]"
+training/外观设计专利/positive/positive_CN202430100002_001.png,positive,positive,0.5600,外观设计专利,CN202430100002,generated,"[{""name"": ""brightness"", ""params"": {""brightness"": 1.048}, ""similarity_delta"": 0.02}, {""name"": ""logo_overlay"", ""params"": {""position"": [323, 344], ""scale"": 0.188, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""saturation"", ""params"": {""saturation"": 0.643}, ""similarity_delta"": 0.02}, {""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}]"
+training/外观设计专利/positive/positive_CN202430100002_002.png,positive,mid,0.5300,外观设计专利,CN202430100002,generated,"[{""name"": ""hue_shift"", ""params"": {""hue_shift"": -43.725}, ""similarity_delta"": 0.03}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.161, ""source"": [271, 344], ""destination"": [298, 360]}, ""similarity_delta"": 0.12}, {""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}]"
+training/外观设计专利/positive/positive_CN202430100002_003.png,positive,positive,0.7010,外观设计专利,CN202430100002,generated,"[{""name"": ""logo_overlay"", ""params"": {""position"": [344, 273], ""scale"": 0.148, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""hue_shift"", ""params"": {""hue_shift"": 10.341}, ""similarity_delta"": 0.03}, {""name"": ""local_warp"", ""params"": {""strength"": 0.064}, ""similarity_delta"": 0.08903014224782939}, {""name"": ""brightness"", ""params"": {""brightness"": 0.784}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100002_004.png,positive,positive,0.6900,外观设计专利,CN202430100002,generated,"[{""name"": ""saturation"", ""params"": {""saturation"": 1.437}, ""similarity_delta"": 0.02}, {""name"": ""hue_shift"", ""params"": {""hue_shift"": 40.513}, ""similarity_delta"": 0.03}, {""name"": ""brightness"", ""params"": {""brightness"": 1.146}, ""similarity_delta"": 0.02}, {""name"": ""mirror"", ""params"": {""direction"": ""horizontal""}, ""similarity_delta"": 0.16}]"
+training/外观设计专利/positive/positive_CN202430100003_001.png,positive,positive,0.7800,外观设计专利,CN202430100003,generated,"[{""name"": ""brightness"", ""params"": {""brightness"": 0.947}, ""similarity_delta"": 0.02}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.178, ""source"": [344, 375], ""destination"": [103, 36]}, ""similarity_delta"": 0.12}]"
+training/外观设计专利/positive/positive_CN202430100003_002.png,positive,mid,0.5170,外观设计专利,CN202430100003,generated,"[{""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}, {""name"": ""local_warp"", ""params"": {""strength"": 0.045}, ""similarity_delta"": 0.06298013626495114}, {""name"": ""logo_overlay"", ""params"": {""position"": [241, 98], ""scale"": 0.082, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""brightness"", ""params"": {""brightness"": 1.151}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100003_003.png,positive,positive,0.7900,外观设计专利,CN202430100003,generated,"[{""name"": ""logo_overlay"", ""params"": {""position"": [179, 360], ""scale"": 0.154, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""saturation"", ""params"": {""saturation"": 0.982}, ""similarity_delta"": 0.02}, {""name"": ""hue_shift"", ""params"": {""hue_shift"": -52.3}, ""similarity_delta"": 0.03}]"
+training/外观设计专利/positive/positive_CN202430100003_004.png,positive,positive,0.8648,外观设计专利,CN202430100003,generated,"[{""name"": ""local_warp"", ""params"": {""strength"": 0.025}, ""similarity_delta"": 0.035164643528965006}, {""name"": ""saturation"", ""params"": {""saturation"": 0.93}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100004_001.png,positive,positive,0.7400,外观设计专利,CN202430100004,generated,"[{""name"": ""mirror"", ""params"": {""direction"": ""horizontal""}, ""similarity_delta"": 0.16}, {""name"": ""saturation"", ""params"": {""saturation"": 1.067}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100004_002.png,positive,mid,0.4015,外观设计专利,CN202430100004,generated,"[{""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.159, ""source"": [228, 47], ""destination"": [278, 184]}, ""similarity_delta"": 0.12}, {""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}, {""name"": ""saturation"", ""params"": {""saturation"": 1.089}, ""similarity_delta"": 0.02}, {""name"": ""local_warp"", ""params"": {""strength"": 0.099}, ""similarity_delta"": 0.1385362668071684}]"
+training/外观设计专利/positive/positive_CN202430100004_003.png,positive,positive,0.6800,外观设计专利,CN202430100004,generated,"[{""name"": ""saturation"", ""params"": {""saturation"": 0.97}, ""similarity_delta"": 0.02}, {""name"": ""crop_stitch"", ""params"": {""crop_ratio"": 0.099, ""source"": [163, 270], ""destination"": [321, 115]}, ""similarity_delta"": 0.12}, {""name"": ""logo_overlay"", ""params"": {""position"": [394, 272], ""scale"": 0.191, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""brightness"", ""params"": {""brightness"": 1.18}, ""similarity_delta"": 0.02}]"
+training/外观设计专利/positive/positive_CN202430100004_004.png,positive,positive,0.6000,外观设计专利,CN202430100004,generated,"[{""name"": ""logo_overlay"", ""params"": {""position"": [189, 136], ""scale"": 0.121, ""opacity"": 0.706}, ""similarity_delta"": 0.08}, {""name"": ""mirror"", ""params"": {""direction"": ""vertical""}, ""similarity_delta"": 0.24}]"
+training/外观设计专利/negative/negative_CN202430100005_001.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100006_002.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100007_003.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100008_004.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100009_005.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100010_006.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100011_007.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100012_008.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100013_009.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100014_010.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100015_011.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100016_012.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100017_013.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100018_014.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100019_015.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100020_016.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100021_017.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100022_018.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100023_019.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
+training/外观设计专利/negative/negative_CN202430100024_020.png,negative,negative,0.2000,外观设计专利,,local_manifest,[]
